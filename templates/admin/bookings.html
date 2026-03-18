@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}Admin — Booking{% endblock %}
+{% block navbar %}{% endblock %}
+{% block footer %}{% endblock %}
+{% block content %}
+<div class="dashboard-layout">
+  <aside class="sidebar">
+    <div class="sidebar-logo">Tutor<span>VN</span> <span style="font-size:.6rem;background:var(--rust);padding:.1rem .35rem;border-radius:4px;color:white">ADMIN</span></div>
+    <div class="sidebar-user">
+      <div class="sidebar-av" style="background:var(--rust)">🛡️</div>
+      <div><div class="sidebar-user-name">{{ current_user.full_name }}</div><div class="sidebar-user-role">Quản trị viên</div></div>
+    </div>
+    <ul class="sidebar-nav">
+      <li><a href="{{ url_for('admin.dashboard') }}"><span class="icon">📊</span> Dashboard</a></li>
+      <li><a href="{{ url_for('admin.users') }}"><span class="icon">👥</span> Người dùng</a></li>
+      <li class="active"><a href="{{ url_for('admin.bookings') }}"><span class="icon">📅</span> Booking</a></li>
+      <li><a href="{{ url_for('auth.logout') }}"><span class="icon">🚪</span> Đăng xuất</a></li>
+    </ul>
+  </aside>
+  <div class="dashboard-main">
+    <div class="dashboard-header"><h1>Tất cả đơn đặt lịch</h1></div>
+    <div class="panel">
+      <table class="admin-table">
+        <thead><tr><th>#</th><th>Học viên</th><th>Gia sư</th><th>Ngày học</th><th>Giờ</th><th>Trạng thái</th><th>Ngày đặt</th></tr></thead>
+        <tbody>
+          {% for b in bookings %}
+          <tr>
+            <td style="color:var(--muted);font-size:.8rem">{{ b.id }}</td>
+            <td><strong>{{ b.student.full_name }}</strong></td>
+            <td>{{ b.tutor_user.full_name }}</td>
+            <td>{{ b.availability.avail_date.strftime('%d/%m/%Y') }}</td>
+            <td>{{ b.availability.start_time }} – {{ b.availability.end_time }}</td>
+            <td><span class="status-badge {{ b.status }}">
+              {% if b.status == 'pending' %}Chờ xác nhận
+              {% elif b.status == 'confirmed' %}Đã xác nhận
+              {% elif b.status == 'completed' %}Hoàn thành
+              {% else %}Đã hủy{% endif %}
+            </span></td>
+            <td style="color:var(--muted);font-size:.8rem">{{ b.created_at.strftime('%d/%m %H:%M') }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% if not bookings %}<p style="color:var(--muted);text-align:center;padding:2rem">Chưa có đơn nào.</p>{% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

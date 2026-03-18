@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — TutorVN{% endblock %}
+{% block navbar %}{% endblock %}
+{% block footer %}{% endblock %}
+
+{% block content %}
+<div class="dashboard-layout">
+  <aside class="sidebar">
+    <div class="sidebar-logo">Tutor<span>VN</span></div>
+    <div class="sidebar-user">
+      <div class="sidebar-av">{{ current_user.full_name[0] }}</div>
+      <div>
+        <div class="sidebar-user-name">{{ current_user.full_name }}</div>
+        <div class="sidebar-user-role">Học viên</div>
+      </div>
+    </div>
+    <ul class="sidebar-nav">
+      <li class="{% if active_tab == 'overview' %}active{% endif %}">
+        <a href="{{ url_for('student.dashboard') }}"><span class="icon">🏠</span> Tổng quan</a>
+      </li>
+      <li class="{% if active_tab == 'bookings' %}active{% endif %}">
+        <a href="{{ url_for('student.my_bookings') }}"><span class="icon">📅</span> Lịch học của tôi</a>
+      </li>
+      <li>
+        <a href="{{ url_for('student.search') }}"><span class="icon">🔍</span> Tìm gia sư</a>
+      </li>
+      <div class="sidebar-section">Tài khoản</div>
+      <li>
+        <a href="{{ url_for('auth.logout') }}"><span class="icon">🚪</span> Đăng xuất</a>
+      </li>
+    </ul>
+  </aside>
+
+  <div class="dashboard-main">
+    <div class="dashboard-header">
+      <h1>Chào, {{ current_user.full_name }}! 👋</h1>
+      <p>Chào mừng bạn quay lại TutorVN</p>
+    </div>
+
+    <div class="metrics-row">
+      <div class="metric-card">
+        <div class="metric-icon">📅</div>
+        <div class="metric-value">{{ pending_count }}</div>
+        <div class="metric-label">Đơn chờ xác nhận</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-icon">✅</div>
+        <div class="metric-value">{{ confirmed_count }}</div>
+        <div class="metric-label">Lịch học sắp tới</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-icon">🎓</div>
+        <div class="metric-value">{{ completed_count }}</div>
+        <div class="metric-label">Buổi học hoàn thành</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-icon">🔍</div>
+        <div class="metric-value"><a href="{{ url_for('student.search') }}" style="color:var(--gold);text-decoration:none">Tìm ngay</a></div>
+        <div class="metric-label">Gia sư đang hoạt động</div>
+      </div>
+    </div>
+
+    <div class="panel-grid">
+      <div class="panel">
+        <h3>📅 Lịch học sắp tới</h3>
+        {% if upcoming_bookings %}
+        <div class="schedule-list">
+          {% for b in upcoming_bookings %}
+          <div class="schedule-item">
+            <div class="schedule-dot {% if b.status == 'pending' %}pending{% endif %}"></div>
+            <div class="schedule-time">{{ b.availability.avail_date.strftime('%d/%m') }}<br>{{ b.availability.start_time }}</div>
+            <div>
+              <div class="schedule-name">{{ b.tutor_user.full_name }}</div>
+              <div class="schedule-subject">
+                {{ b.tutor_user.tutor_profile.subject.name if b.tutor_user.tutor_profile else '' }}
+              </div>
+            </div>
+            <span class="status-badge {{ b.status }}" style="margin-left:auto">
+              {% if b.status == 'pending' %}Chờ xác nhận
+              {% elif b.status == 'confirmed' %}Đã xác nhận
+              {% endif %}
+            </span>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <div style="text-align:center;padding:2rem;color:var(--muted)">
+          <p>Chưa có lịch học nào.</p>
+          <a href="{{ url_for('student.search') }}" class="btn-primary" style="margin-top:1rem;display:inline-block;padding:.6rem 1.25rem;font-size:.875rem">Tìm gia sư ngay</a>
+        </div>
+        {% endif %}
+      </div>
+
+      <div class="panel">
+        <h3>⚡ Thao tác nhanh</h3>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin-top:.5rem">
+          <a href="{{ url_for('student.search') }}" style="padding:.85rem;border-radius:10px;text-align:center;cursor:pointer;font-size:.85rem;font-weight:600;border:1px solid var(--border);background:var(--warm);text-decoration:none;color:var(--ink);transition:all .2s">
+            <span style="font-size:1.5rem;display:block;margin-bottom:.25rem">🔍</span>Tìm gia sư
+          </a>
+          <a href="{{ url_for('student.my_bookings') }}" style="padding:.85rem;border-radius:10px;text-align:center;cursor:pointer;font-size:.85rem;font-weight:600;border:1px solid var(--border);background:var(--warm);text-decoration:none;color:var(--ink);transition:all .2s">
+            <span style="font-size:1.5rem;display:block;margin-bottom:.25rem">📋</span>Xem lịch học
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

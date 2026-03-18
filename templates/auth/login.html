@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}Đăng nhập — TutorVN{% endblock %}
+{% block navbar %}{% endblock %}
+{% block footer %}{% endblock %}
+
+{% block content %}
+<style>
+  .auth-page { min-height:100vh; display:grid; grid-template-columns:1fr 1fr; }
+  .auth-visual { background:var(--ink); display:flex; align-items:center; justify-content:center; padding:3rem; position:relative; overflow:hidden; }
+  .auth-visual-content { position:relative; z-index:1; color:var(--cream); text-align:center; }
+  .auth-visual h2 { font-family:'Playfair Display',serif; font-size:2.5rem; font-weight:900; margin-bottom:1rem; }
+  .auth-visual h2 em { color:var(--gold); font-style:italic; }
+  .auth-visual p { color:rgba(250,248,243,.7); max-width:340px; }
+  .auth-bg-circle { position:absolute; border-radius:50%; background:rgba(201,168,76,.08); }
+  .auth-form-side { display:flex; align-items:center; justify-content:center; padding:3rem; background:var(--cream); }
+  .auth-form { width:100%; max-width:400px; }
+  .auth-form h3 { font-family:'Playfair Display',serif; font-size:2rem; font-weight:700; margin-bottom:.5rem; }
+  .auth-form > p { color:var(--muted); margin-bottom:2rem; }
+  .auth-switch { text-align:center; margin-top:1.25rem; font-size:.9rem; color:var(--muted); }
+  .auth-switch a { color:var(--gold); font-weight:600; text-decoration:none; }
+  @media(max-width:768px) { .auth-page { grid-template-columns:1fr; } .auth-visual { display:none; } }
+</style>
+
+<div class="auth-page">
+  <div class="auth-visual">
+    <div class="auth-bg-circle" style="width:400px;height:400px;top:-100px;left:-100px"></div>
+    <div class="auth-bg-circle" style="width:300px;height:300px;bottom:-50px;right:-50px"></div>
+    <div class="auth-visual-content">
+      <div style="font-size:4rem;margin-bottom:1.5rem">👋</div>
+      <h2>Chào mừng <em>trở lại!</em></h2>
+      <p style="margin-top:1rem">Đăng nhập để tiếp tục hành trình học tập của bạn</p>
+      <div style="margin-top:2rem;padding:1.25rem;background:rgba(255,255,255,.05);border-radius:12px;text-align:left">
+        <p style="font-size:.8rem;color:rgba(250,248,243,.5);margin-bottom:.75rem">Tài khoản demo (mật khẩu: 123456)</p>
+        <p style="font-size:.85rem;margin-bottom:.3rem">🛡️ Admin: admin@tc.vn</p>
+        <p style="font-size:.85rem;margin-bottom:.3rem">👩‍🏫 Gia sư: an@tc.vn</p>
+        <p style="font-size:.85rem">👨‍🎓 Học viên: em@tc.vn</p>
+      </div>
+    </div>
+  </div>
+  <div class="auth-form-side">
+    <div class="auth-form">
+      <h3>Đăng nhập</h3>
+      <p>Nhập thông tin tài khoản của bạn</p>
+
+      <form method="POST">
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" name="email" class="form-input" placeholder="example@email.com" required autofocus>
+        </div>
+        <div class="form-group">
+          <label>Mật khẩu</label>
+          <input type="password" name="password" class="form-input" placeholder="Nhập mật khẩu" required>
+        </div>
+        <button type="submit" class="btn-primary" style="width:100%;margin-top:.5rem">Đăng nhập</button>
+      </form>
+
+      <div class="auth-switch" style="margin-top:1.25rem">
+        Chưa có tài khoản? <a href="{{ url_for('auth.register') }}">Đăng ký ngay</a>
+      </div>
+      <div style="text-align:center;margin-top:1rem">
+        <a href="{{ url_for('auth.index') }}" style="font-size:.85rem;color:var(--muted);text-decoration:none">← Về trang chủ</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+{% block title %}Dashboard Gia sư — TutorVN{% endblock %}
+{% block navbar %}{% endblock %}
+{% block footer %}{% endblock %}
+
+{% block content %}
+<div class="dashboard-layout">
+  <aside class="sidebar">
+    <div class="sidebar-logo">Tutor<span>VN</span></div>
+    <div class="sidebar-user">
+      <div class="sidebar-av">{{ current_user.full_name[0] }}</div>
+      <div>
+        <div class="sidebar-user-name">{{ current_user.full_name }}</div>
+        <div class="sidebar-user-role">Gia sư</div>
+      </div>
+    </div>
+    <ul class="sidebar-nav">
+      <li class="{% if active_tab == 'bookings' %}active{% endif %}">
+        <a href="{{ url_for('tutor.dashboard') }}"><span class="icon">📅</span> Quản lý đơn</a>
+      </li>
+      <li class="{% if active_tab == 'schedule' %}active{% endif %}">
+        <a href="{{ url_for('tutor.schedule') }}"><span class="icon">🗓️</span> Lịch rảnh</a>
+      </li>
+      <div class="sidebar-section">Tài khoản</div>
+      <li><a href="{{ url_for('auth.logout') }}"><span class="icon">🚪</span> Đăng xuất</a></li>
+    </ul>
+  </aside>
+
+  <div class="dashboard-main">
+    <div class="dashboard-header">
+      <h1>Xin chào, {{ current_user.full_name }}! 🌟</h1>
+      <p>Bạn có <strong>{{ pending|length }}</strong> yêu cầu đặt lịch mới</p>
+    </div>
+
+    <!-- Đơn chờ xác nhận -->
+    <div class="panel" style="margin-bottom:1.5rem">
+      <h3>⏳ Chờ xác nhận <span style="background:#fff3cd;color:#856404;padding:.2rem .6rem;border-radius:100px;font-size:.75rem;font-weight:600;margin-left:.5rem">{{ pending|length }}</span></h3>
+      {% if pending %}
+      <table class="admin-table">
+        <thead><tr><th>Học viên</th><th>Ngày học</th><th>Giờ</th><th>Ghi chú</th><th>Hành động</th></tr></thead>
+        <tbody>
+          {% for b in pending %}
+          <tr>
+            <td><strong>{{ b.student.full_name }}</strong></td>
+            <td>{{ b.availability.avail_date.strftime('%d/%m/%Y') }}</td>
+            <td>{{ b.availability.start_time }} – {{ b.availability.end_time }}</td>
+            <td style="color:var(--muted);font-size:.85rem">{{ b.note or '—' }}</td>
+            <td>
+              <div class="admin-actions">
+                <form method="POST" action="{{ url_for('tutor.accept', booking_id=b.id) }}" style="display:inline">
+                  <button type="submit" class="action-btn approve" onclick="return confirm('Xác nhận lịch học?')">✓ Duyệt</button>
+                </form>
+                <form method="POST" action="{{ url_for('tutor.reject', booking_id=b.id) }}" style="display:inline">
+                  <button type="submit" class="action-btn reject" onclick="return confirm('Từ chối đơn này?')">✗ Từ chối</button>
+                </form>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <p style="color:var(--muted);text-align:center;padding:1.5rem">Không có đơn nào đang chờ.</p>
+      {% endif %}
+    </div>
+
+    <!-- Đã xác nhận -->
+    <div class="panel" style="margin-bottom:1.5rem">
+      <h3>✅ Đã xác nhận <span style="background:#d1e7dd;color:#0a3622;padding:.2rem .6rem;border-radius:100px;font-size:.75rem;font-weight:600;margin-left:.5rem">{{ confirmed|length }}</span></h3>
+      {% if confirmed %}
+      <table class="admin-table">
+        <thead><tr><th>Học viên</th><th>Ngày học</th><th>Giờ</th><th>Hành động</th></tr></thead>
+        <tbody>
+          {% for b in confirmed %}
+          <tr>
+            <td><strong>{{ b.student.full_name }}</strong></td>
+            <td>{{ b.availability.avail_date.strftime('%d/%m/%Y') }}</td>
+            <td>{{ b.availability.start_time }} – {{ b.availability.end_time }}</td>
+            <td>
+              <form method="POST" action="{{ url_for('tutor.complete', booking_id=b.id) }}" style="display:inline">
+                <button type="submit" class="action-btn" style="background:#cfe2ff;color:#084298" onclick="return confirm('Đánh dấu hoàn thành?')">🏁 Hoàn thành</button>
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <p style="color:var(--muted);text-align:center;padding:1.5rem">Chưa có lịch dạy đã xác nhận.</p>
+      {% endif %}
+    </div>
+
+    <!-- Hoàn thành gần đây -->
+    {% if completed %}
+    <div class="panel">
+      <h3>📚 Hoàn thành gần đây</h3>
+      <table class="admin-table">
+        <thead><tr><th>Học viên</th><th>Ngày học</th><th>Giờ</th></tr></thead>
+        <tbody>
+          {% for b in completed %}
+          <tr>
+            <td>{{ b.student.full_name }}</td>
+            <td>{{ b.availability.avail_date.strftime('%d/%m/%Y') }}</td>
+            <td>{{ b.availability.start_time }} – {{ b.availability.end_time }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

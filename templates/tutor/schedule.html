@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+{% block title %}Lịch rảnh của tôi{% endblock %}
+
+{% block content %}
+<h5 class="fw-bold mb-4"><i class="bi bi-calendar3 me-2 text-primary"></i>Quản lý lịch rảnh</h5>
+
+<div class="row g-4">
+  <!-- Form thêm slot -->
+  <div class="col-md-4">
+    <div class="card p-3">
+      <h6 class="fw-bold mb-3">Thêm slot mới</h6>
+      <form method="POST" action="{{ url_for('tutor.add_slot') }}">
+        <div class="mb-3">
+          <label class="form-label">Ngày <span class="text-danger">*</span></label>
+          <input type="date" name="avail_date" class="form-control" required
+                 min="{{ today.strftime('%Y-%m-%d') if today else '' }}">
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Giờ bắt đầu <span class="text-danger">*</span></label>
+          <select name="start_time" class="form-select" required>
+            {% for h in range(6, 22) %}
+            <option value="{{ '%02d:00'|format(h) }}">{{ '%02d:00'|format(h) }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Giờ kết thúc <span class="text-danger">*</span></label>
+          <select name="end_time" class="form-select" required>
+            {% for h in range(7, 23) %}
+            <option value="{{ '%02d:00'|format(h) }}" {% if h == 9 %}selected{% endif %}>{{ '%02d:00'|format(h) }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <button type="submit" class="btn btn-primary w-100">
+          <i class="bi bi-plus-circle me-1"></i>Thêm slot
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Danh sách slot -->
+  <div class="col-md-8">
+    <div class="card">
+      <div class="card-header fw-bold bg-light">
+        Các slot đã đăng ký
+        <span class="badge bg-secondary ms-1">{{ slots|length }}</span>
+      </div>
+      {% if slots %}
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light">
+            <tr><th>Ngày</th><th>Giờ bắt đầu</th><th>Giờ kết thúc</th><th>Trạng thái</th><th></th></tr>
+          </thead>
+          <tbody>
+            {% for slot in slots %}
+            <tr>
+              <td class="fw-bold">{{ slot.avail_date.strftime('%d/%m/%Y') }}</td>
+              <td>{{ slot.start_time }}</td>
+              <td>{{ slot.end_time }}</td>
+              <td>
+                {% if slot.is_booked %}
+                  <span class="badge badge-confirmed">Đã có người đặt</span>
+                {% else %}
+                  <span class="badge bg-light text-success border border-success">Còn trống</span>
+                {% endif %}
+              </td>
+              <td>
+                {% if not slot.is_booked %}
+                <form method="POST" action="{{ url_for('tutor.delete_slot', slot_id=slot.id) }}"
+                      onsubmit="return confirm('Xóa slot này?')">
+                  <button type="submit" class="btn btn-outline-danger btn-sm">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </form>
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="text-center text-muted py-4">
+        <i class="bi bi-calendar-plus" style="font-size:2.5rem"></i>
+        <p class="mt-2">Chưa có slot nào. Thêm lịch rảnh để học viên có thể đặt.</p>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Tự điền giờ kết thúc = giờ bắt đầu + 1
+document.querySelector('[name="start_time"]').addEventListener('change', function() {
+  const h = parseInt(this.value.split(':')[0]);
+  const endSel = document.querySelector('[name="end_time"]');
+  const nextH = String(h + 1).padStart(2, '0') + ':00';
+  for (let opt of endSel.options) {
+    if (opt.value === nextH) { opt.selected = true; break; }
+  }
+});
+</script>
+{% endblock %}

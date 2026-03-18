@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}Lịch học của tôi{% endblock %}
+
+{% block content %}
+<h5 class="fw-bold mb-4"><i class="bi bi-calendar-check me-2 text-primary"></i>Lịch học của tôi</h5>
+
+{% if bookings %}
+<div class="table-responsive">
+  <table class="table table-hover align-middle bg-white rounded">
+    <thead class="table-light">
+      <tr>
+        <th>Gia sư</th>
+        <th>Ngày học</th>
+        <th>Giờ</th>
+        <th>Ghi chú</th>
+        <th>Trạng thái</th>
+        <th>Ngày đặt</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for b in bookings %}
+      <tr>
+        <td class="fw-bold">{{ b.tutor_user.full_name }}</td>
+        <td>{{ b.availability.avail_date.strftime('%d/%m/%Y') }}</td>
+        <td>{{ b.availability.start_time }} – {{ b.availability.end_time }}</td>
+        <td class="text-muted small">{{ b.note or '—' }}</td>
+        <td>
+          <span class="badge badge-{{ b.status }} px-2 py-1">
+            {% if b.status == 'pending' %}Chờ xác nhận
+            {% elif b.status == 'confirmed' %}Đã xác nhận
+            {% elif b.status == 'completed' %}Hoàn thành
+            {% else %}Đã hủy{% endif %}
+          </span>
+        </td>
+        <td class="text-muted small">{{ b.created_at.strftime('%d/%m %H:%M') }}</td>
+        <td>
+          {% if b.status == 'pending' %}
+          <form method="POST" action="{{ url_for('student.cancel', booking_id=b.id) }}"
+                onsubmit="return confirm('Bạn chắc chắn muốn hủy lịch này?')">
+            <button type="submit" class="btn btn-outline-danger btn-sm">
+              <i class="bi bi-x-circle me-1"></i>Hủy
+            </button>
+          </form>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<div class="text-center text-muted py-5">
+  <i class="bi bi-calendar2-x" style="font-size:3rem"></i>
+  <p class="mt-2">Bạn chưa có lịch học nào.</p>
+  <a href="{{ url_for('student.search') }}" class="btn btn-primary mt-1">
+    <i class="bi bi-search me-1"></i>Tìm gia sư ngay
+  </a>
+</div>
+{% endif %}
+{% endblock %}

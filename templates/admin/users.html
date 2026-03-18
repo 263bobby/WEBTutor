@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% block title %}Admin — Quản lý người dùng{% endblock %}
+
+{% block content %}
+<h5 class="fw-bold mb-4"><i class="bi bi-people me-2 text-primary"></i>Quản lý người dùng</h5>
+
+<!-- Tab gia sư / học viên -->
+<ul class="nav nav-tabs mb-3" id="userTab">
+  <li class="nav-item">
+    <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tutors-tab">
+      Gia sư <span class="badge bg-secondary ms-1">{{ tutors|length }}</span>
+    </button>
+  </li>
+  <li class="nav-item">
+    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#students-tab">
+      Học viên <span class="badge bg-secondary ms-1">{{ students|length }}</span>
+    </button>
+  </li>
+</ul>
+
+<div class="tab-content">
+  <!-- Gia sư -->
+  <div class="tab-pane fade show active" id="tutors-tab">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle bg-white">
+        <thead class="table-light">
+          <tr><th>Họ tên</th><th>Email</th><th>SĐT</th><th>Trạng thái</th><th>Ngày tạo</th><th></th></tr>
+        </thead>
+        <tbody>
+          {% for u in tutors %}
+          <tr class="{% if not u.is_active %}table-secondary text-muted{% endif %}">
+            <td class="fw-bold">{{ u.full_name }}</td>
+            <td>{{ u.email }}</td>
+            <td>{{ u.phone or '—' }}</td>
+            <td>
+              {% if u.is_active %}
+                <span class="badge bg-success">Hoạt động</span>
+              {% else %}
+                <span class="badge bg-danger">Đã khóa</span>
+              {% endif %}
+            </td>
+            <td class="text-muted small">{{ u.created_at.strftime('%d/%m/%Y') }}</td>
+            <td>
+              <form method="POST" action="{{ url_for('admin.toggle_user', user_id=u.id) }}"
+                    onsubmit="return confirm('{% if u.is_active %}Khóa{% else %}Mở khóa{% endif %} tài khoản {{ u.full_name }}?')">
+                <button class="btn btn-sm {% if u.is_active %}btn-outline-danger{% else %}btn-outline-success{% endif %}">
+                  {% if u.is_active %}
+                    <i class="bi bi-lock me-1"></i>Khóa
+                  {% else %}
+                    <i class="bi bi-unlock me-1"></i>Mở khóa
+                  {% endif %}
+                </button>
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Học viên -->
+  <div class="tab-pane fade" id="students-tab">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle bg-white">
+        <thead class="table-light">
+          <tr><th>Họ tên</th><th>Email</th><th>SĐT</th><th>Trạng thái</th><th>Ngày tạo</th><th></th></tr>
+        </thead>
+        <tbody>
+          {% for u in students %}
+          <tr class="{% if not u.is_active %}table-secondary text-muted{% endif %}">
+            <td class="fw-bold">{{ u.full_name }}</td>
+            <td>{{ u.email }}</td>
+            <td>{{ u.phone or '—' }}</td>
+            <td>
+              {% if u.is_active %}
+                <span class="badge bg-success">Hoạt động</span>
+              {% else %}
+                <span class="badge bg-danger">Đã khóa</span>
+              {% endif %}
+            </td>
+            <td class="text-muted small">{{ u.created_at.strftime('%d/%m/%Y') }}</td>
+            <td>
+              <form method="POST" action="{{ url_for('admin.toggle_user', user_id=u.id) }}"
+                    onsubmit="return confirm('{% if u.is_active %}Khóa{% else %}Mở khóa{% endif %} tài khoản {{ u.full_name }}?')">
+                <button class="btn btn-sm {% if u.is_active %}btn-outline-danger{% else %}btn-outline-success{% endif %}">
+                  {% if u.is_active %}
+                    <i class="bi bi-lock me-1"></i>Khóa
+                  {% else %}
+                    <i class="bi bi-unlock me-1"></i>Mở khóa
+                  {% endif %}
+                </button>
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}
