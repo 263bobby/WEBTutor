@@ -59,7 +59,7 @@ class TutorProfile(db.Model):
     hourly_rate      = db.Column(db.Numeric(10, 2), default=100000)
     rating_avg       = db.Column(db.Numeric(3, 2), default=0.00)
     total_reviews    = db.Column(db.Integer, default=0)
-    is_verified      = db.Column(db.Boolean, default=False)
+
 
 
 # ══════════════════════════════════════════════════════════

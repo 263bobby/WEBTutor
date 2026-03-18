@@ -1,10 +1,110 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<body>
+{% extends "base.html" %}
+{% block title %}Tìm gia sư — TutorVN{% endblock %}
 
-</body>
-</html>
+{% block content %}
+<div class="page-header">
+  <div style="max-width:1200px;margin:0 auto">
+    <h2>Danh sách gia sư</h2>
+    <form method="GET" class="search-bar">
+      <span style="font-size:1.1rem;color:var(--muted)">🔍</span>
+      <input type="text" name="q" placeholder="Tìm theo tên, môn học..."
+             value="{{ request.args.get('q','') }}">
+      <button type="submit" style="background:var(--ink);color:var(--cream);border:none;border-radius:8px;padding:.4rem 1rem;font-size:.85rem;cursor:pointer">Tìm</button>
+    </form>
+  </div>
+</div>
+
+<div class="page-layout">
+
+  <!-- Sidebar lọc -->
+  <aside class="filter-sidebar">
+    <div class="filter-title">🎛️ Bộ lọc</div>
+    <form method="GET">
+      <div class="filter-group">
+        <label>Môn học</label>
+        <select name="subject_id"
+                style="width:100%;padding:.6rem .75rem;border:1px solid var(--border);border-radius:8px;font-size:.875rem;background:var(--cream);font-family:'DM Sans',sans-serif"
+                onchange="this.form.submit()">
+          <option value="">-- Tất cả môn --</option>
+          {% for s in subjects %}
+          <option value="{{ s.id }}"
+                  {% if selected_subject == s.id %}selected{% endif %}>
+            {{ s.name }}
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+      <a href="{{ url_for('student.search') }}"
+         style="font-size:.85rem;color:var(--rust);text-decoration:none">
+        ✕ Xóa bộ lọc
+      </a>
+    </form>
+  </aside>
+
+  <!-- Danh sách gia sư -->
+  <div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+      <span style="font-size:.9rem;color:var(--muted)">
+        Tìm thấy <strong>{{ tutors|length }}</strong> gia sư
+      </span>
+    </div>
+
+    {% if tutors %}
+    <div class="tutors-grid">
+      {% for tp in tutors %}
+      <a href="{{ url_for('student.tutor_detail', tutor_id=tp.user.id) }}"
+         class="tutor-card">
+        <div class="tutor-avatar">{{ tp.user.full_name[0] }}</div>
+        <div>
+          <div class="tutor-name">{{ tp.user.full_name }}</div>
+          <div class="tutor-subjects">
+            {{ tp.subject.name }} · {{ tp.experience_years }} năm kinh nghiệm
+          </div>
+          <div class="tutor-tags">
+            <span class="tag">{{ tp.subject.name }}</span>
+          </div>
+          <div class="tutor-rating">
+            {% if tp.rating_avg > 0 %}
+              ⭐ {{ "%.1f"|format(tp.rating_avg) }}
+              <span style="font-weight:400;color:var(--muted);font-size:.8rem">
+                ({{ tp.total_reviews }} đánh giá)
+              </span>
+            {% else %}
+              <span style="color:var(--muted);font-size:.85rem">Chưa có đánh giá</span>
+            {% endif %}
+          </div>
+          <div style="font-size:.85rem;color:var(--muted);margin-top:.25rem">
+            {{ tp.bio or 'Chưa có mô tả.' }}
+          </div>
+        </div>
+        <div>
+          <div class="tutor-price">
+            {{ "{:,.0f}".format(tp.hourly_rate) }}đ
+            <span>/ giờ</span>
+          </div>
+          <div style="margin-top:.75rem;background:var(--ink);color:var(--cream);
+                      padding:.5rem 1rem;border-radius:8px;font-size:.8rem;
+                      font-weight:600;text-align:center">
+            Xem lịch & Đặt
+          </div>
+        </div>
+      </a>
+      {% endfor %}
+    </div>
+
+    {% else %}
+    <div style="text-align:center;padding:4rem;color:var(--muted)">
+      <div style="font-size:3rem;margin-bottom:1rem">🔍</div>
+      <p>Không tìm thấy gia sư phù hợp.</p>
+      <a href="{{ url_for('student.search') }}"
+         class="btn-primary"
+         style="margin-top:1rem;display:inline-block;padding:.7rem 1.5rem;
+                text-decoration:none;border-radius:10px">
+        Xem tất cả gia sư
+      </a>
+    </div>
+    {% endif %}
+
+  </div>
+</div>
+{% endblock %}
