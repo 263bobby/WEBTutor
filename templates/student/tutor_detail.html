@@ -1,73 +1,132 @@
-<!DOCTYPE{% extends "base.html" %}
-{% block title %}{{ tutor.full_name }} — Đặt lịch{% endblock %}
+{% extends "base.html" %}
+{% block title %}{{ tutor.full_name }} — TutorVN{% endblock %}
 
 {% block content %}
-<a href="{{ url_for('student.search') }}" class="btn btn-sm btn-outline-secondary mb-3">
-  <i class="bi bi-arrow-left me-1"></i>Quay lại tìm kiếm
-</a>
+<style>
+  .profile-header { background:var(--ink); color:var(--cream); padding:3rem 2rem; }
+  .profile-header-inner { max-width:1200px; margin:0 auto; display:grid; grid-template-columns:auto 1fr auto; gap:2rem; align-items:start; }
+  .profile-avatar-lg { width:100px; height:100px; border-radius:20px; background:linear-gradient(135deg,var(--gold-light),var(--gold)); display:flex; align-items:center; justify-content:center; font-size:2.5rem; font-weight:700; color:var(--ink); }
+  .profile-name { font-family:'Playfair Display',serif; font-size:1.8rem; font-weight:700; margin-bottom:.4rem; }
+  .profile-meta { color:rgba(250,248,243,.7); font-size:.9rem; margin-bottom:.5rem; }
+  .profile-content { max-width:1200px; margin:0 auto; padding:2rem; display:grid; grid-template-columns:1fr 360px; gap:2rem; }
+  .booking-select { width:100%; padding:.75rem 1rem; border:1px solid var(--border); border-radius:10px; font-family:'DM Sans',sans-serif; font-size:.9rem; margin-bottom:.75rem; background:var(--cream); }
+  .booking-select:focus { outline:none; border-color:var(--gold); }
+  .btn-book { width:100%; background:var(--rust); color:var(--white); padding:1rem; border-radius:10px; font-size:1rem; font-weight:700; cursor:pointer; border:none; transition:all .2s; }
+  .btn-book:hover { background:#a84217; }
+  .price-display { font-size:2.2rem; font-weight:700; font-family:'Playfair Display',serif; color:var(--rust); }
+  .price-display span { font-size:.95rem; color:var(--muted); font-family:'DM Sans',sans-serif; font-weight:400; }
+  .slot-grid { display:flex; flex-direction:column; gap:.6rem; max-height:400px; overflow-y:auto; }
+  .slot-item { background:var(--warm); border:1px solid var(--border); border-radius:10px; padding:.85rem 1rem; display:flex; align-items:center; justify-content:space-between; }
+  .slot-date { font-weight:600; font-size:.9rem; }
+  .slot-time { font-size:.85rem; color:var(--muted); margin-top:.1rem; }
+  @media(max-width:768px) { .profile-header-inner { grid-template-columns:auto 1fr; } .profile-content { grid-template-columns:1fr; } }
+</style>
 
-<div class="row g-4">
-  <!-- Hồ sơ gia sư -->
-  <div class="col-md-4">
-    <div class="card p-3">
-      <div class="text-center mb-3">
-        <div class="rounded-circle bg-primary text-white d-inline-flex align-items-center justify-content-center mb-2"
-             style="width:72px;height:72px;font-size:2rem;font-weight:700">
-          {{ tutor.full_name[0] }}
-        </div>
-        <h5 class="fw-bold mb-0">{{ tutor.full_name }}</h5>
+<!-- Header gia sư -->
+<div class="profile-header">
+  <div class="profile-header-inner">
+    <div class="profile-avatar-lg">{{ tutor.full_name[0] }}</div>
+    <div>
+      <div class="profile-name">{{ tutor.full_name }}</div>
+      <div class="profile-meta">
+        📞 {{ tutor.phone or 'Chưa cập nhật' }}
         {% if tutor.tutor_profile %}
-          <span class="badge bg-info text-dark">{{ tutor.tutor_profile.subject.name }}</span>
+          &nbsp;·&nbsp; 📚 {{ tutor.tutor_profile.subject.name }}
+          &nbsp;·&nbsp; ⏱️ {{ tutor.tutor_profile.experience_years }} năm kinh nghiệm
         {% endif %}
       </div>
-      {% if tutor.tutor_profile %}
-      <ul class="list-unstyled small text-muted mb-2">
-        <li><i class="bi bi-telephone me-2"></i>{{ tutor.phone or 'N/A' }}</li>
-        <li><i class="bi bi-briefcase me-2"></i>{{ tutor.tutor_profile.experience_years }} năm kinh nghiệm</li>
-        <li class="text-success fw-bold mt-1">
-          <i class="bi bi-cash-coin me-2"></i>{{ "{:,.0f}".format(tutor.tutor_profile.hourly_rate) }}đ / giờ
-        </li>
-      </ul>
-      <p class="small text-muted">{{ tutor.tutor_profile.bio or 'Chưa có giới thiệu.' }}</p>
-      {% endif %}
+      <div style="display:flex;gap:1rem;flex-wrap:wrap;margin-top:.5rem">
+        {% if tutor.tutor_profile and tutor.tutor_profile.rating_avg > 0 %}
+          <span style="color:var(--gold)">★ {{ "%.1f"|format(tutor.tutor_profile.rating_avg) }}</span>
+          <span style="color:rgba(250,248,243,.7)">{{ tutor.tutor_profile.total_reviews }} đánh giá</span>
+        {% else %}
+          <span style="color:rgba(250,248,243,.5)">Chưa có đánh giá</span>
+        {% endif %}
+      </div>
     </div>
+    <a href="{{ url_for('student.search') }}"
+       style="color:rgba(250,248,243,.7);text-decoration:none;font-size:.9rem;align-self:flex-start">
+      ← Quay lại
+    </a>
   </div>
+</div>
 
-  <!-- Chọn slot & đặt lịch -->
-  <div class="col-md-8">
-    <div class="card p-3">
-      <h6 class="fw-bold mb-3"><i class="bi bi-calendar2-check me-2 text-primary"></i>Chọn lịch học</h6>
+<!-- Nội dung -->
+<div class="profile-content">
 
+  <!-- Cột trái: thông tin -->
+  <div>
+    {% if tutor.tutor_profile and tutor.tutor_profile.bio %}
+    <div class="card-box" style="margin-bottom:1.25rem">
+      <h3>Giới thiệu</h3>
+      <p style="color:var(--muted);line-height:1.8">{{ tutor.tutor_profile.bio }}</p>
+    </div>
+    {% endif %}
+
+    <div class="card-box">
+      <h3>📅 Lịch rảnh còn trống</h3>
       {% if slots %}
-        <div class="row row-cols-1 row-cols-sm-2 g-2">
-          {% for slot in slots %}
-          <div class="col">
-            <div class="border rounded p-2">
-              <div class="fw-bold text-dark">
-                {{ slot.avail_date.strftime('%d/%m/%Y') }}
-                <span class="badge bg-light text-dark ms-1">
-                  {{ slot.start_time }} – {{ slot.end_time }}
-                </span>
-              </div>
-              <form method="POST" action="{{ url_for('student.book', avail_id=slot.id) }}" class="mt-2">
-                <input type="text" name="note" class="form-control form-control-sm mb-2"
-                       placeholder="Ghi chú (tùy chọn)">
-                <button type="submit" class="btn btn-primary btn-sm w-100"
-                        onclick="return confirm('Xác nhận đặt lịch ngày {{ slot.avail_date.strftime("%d/%m") }} lúc {{ slot.start_time }}?')">
-                  <i class="bi bi-check2 me-1"></i>Đặt lịch này
-                </button>
-              </form>
-            </div>
+      <div class="slot-grid" style="margin-top:1rem">
+        {% for slot in slots %}
+        <div class="slot-item">
+          <div>
+            <div class="slot-date">{{ slot.avail_date.strftime('%A, %d/%m/%Y') }}</div>
+            <div class="slot-time">{{ slot.start_time }} – {{ slot.end_time }}</div>
           </div>
-          {% endfor %}
+          <form method="POST" action="{{ url_for('student.book', avail_id=slot.id) }}">
+            <input type="hidden" name="note" value="">
+            <button type="submit" class="btn-primary"
+                    style="padding:.45rem 1.1rem;font-size:.85rem;border-radius:8px"
+                    onclick="return confirm('Đặt lịch ngày {{ slot.avail_date.strftime('%d/%m') }} lúc {{ slot.start_time }}?')">
+              Đặt ngay
+            </button>
+          </form>
         </div>
+        {% endfor %}
+      </div>
       {% else %}
-        <div class="text-center text-muted py-4">
-          <i class="bi bi-calendar-x" style="font-size:2.5rem"></i>
-          <p class="mt-2">Gia sư chưa có lịch rảnh. Vui lòng quay lại sau.</p>
-        </div>
+      <div style="text-align:center;padding:2.5rem;color:var(--muted)">
+        <div style="font-size:2.5rem;margin-bottom:.75rem">📭</div>
+        <p>Gia sư chưa có lịch rảnh.<br>Vui lòng quay lại sau.</p>
+      </div>
       {% endif %}
     </div>
   </div>
+
+  <!-- Cột phải: booking box -->
+  <div style="position:sticky;top:80px">
+    <div class="card-box">
+      {% if tutor.tutor_profile %}
+      <div class="price-display">
+        {{ "{:,.0f}".format(tutor.tutor_profile.hourly_rate) }}đ
+        <span>/ giờ</span>
+      </div>
+      <p style="font-size:.85rem;color:var(--muted);margin:.75rem 0 1.25rem">
+        Môn: <strong>{{ tutor.tutor_profile.subject.name }}</strong>
+      </p>
+      {% endif %}
+
+      <div style="background:var(--warm);border-radius:10px;padding:1rem;margin-bottom:1rem;font-size:.875rem">
+        <div style="font-weight:600;margin-bottom:.5rem">Hướng dẫn đặt lịch:</div>
+        <div style="color:var(--muted);line-height:1.8">
+          1. Chọn slot rảnh bên trái<br>
+          2. Bấm <strong>Đặt ngay</strong><br>
+          3. Chờ gia sư xác nhận
+        </div>
+      </div>
+
+      <a href="{{ url_for('student.my_bookings') }}"
+         style="display:block;text-align:center;padding:.85rem;border-radius:10px;
+                background:var(--warm);color:var(--ink);text-decoration:none;
+                font-weight:600;font-size:.95rem;border:1px solid var(--border)">
+        📋 Xem lịch học của tôi
+      </a>
+
+      <div style="margin-top:1rem;text-align:center;font-size:.78rem;color:var(--muted)">
+        🔒 Thông tin bảo mật &nbsp;·&nbsp; Hủy miễn phí trước khi xác nhận
+      </div>
+    </div>
+  </div>
+
 </div>
 {% endblock %}

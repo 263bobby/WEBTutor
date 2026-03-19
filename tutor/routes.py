@@ -23,13 +23,20 @@ def tutor_required(f):
 @login_required
 @tutor_required
 def dashboard():
-    pending   = Booking.query.filter_by(tutor_id=current_user.id, status='pending')\
-                             .order_by(Booking.created_at.desc()).all()
-    confirmed = Booking.query.filter_by(tutor_id=current_user.id, status='confirmed')\
-                             .order_by(Booking.created_at.desc()).all()
-    completed = Booking.query.filter_by(tutor_id=current_user.id, status='completed')\
-                             .order_by(Booking.created_at.desc()).limit(10).all()
+    pending = Booking.query.filter_by(
+        tutor_id=current_user.id, status='pending'
+    ).order_by(Booking.created_at.desc()).all()
+
+    confirmed = Booking.query.filter_by(
+        tutor_id=current_user.id, status='confirmed'
+    ).order_by(Booking.created_at.desc()).all()
+
+    completed = Booking.query.filter_by(
+        tutor_id=current_user.id, status='completed'
+    ).order_by(Booking.created_at.desc()).limit(10).all()
+
     return render_template('tutor/dashboard.html',
+                           active_tab='bookings',
                            pending=pending,
                            confirmed=confirmed,
                            completed=completed)
@@ -40,8 +47,12 @@ def dashboard():
 @login_required
 @tutor_required
 def accept(booking_id):
-    booking = Booking.query.filter_by(id=booking_id, tutor_id=current_user.id,
-                                      status='pending').first_or_404()
+    booking = Booking.query.filter_by(
+        id=booking_id,
+        tutor_id=current_user.id,
+        status='pending'
+    ).first_or_404()
+
     booking.status = 'confirmed'
     db.session.commit()
     flash(f'Đã xác nhận lịch học với {booking.student.full_name}.', 'success')
@@ -53,10 +64,14 @@ def accept(booking_id):
 @login_required
 @tutor_required
 def reject(booking_id):
-    booking = Booking.query.filter_by(id=booking_id, tutor_id=current_user.id,
-                                      status='pending').first_or_404()
+    booking = Booking.query.filter_by(
+        id=booking_id,
+        tutor_id=current_user.id,
+        status='pending'
+    ).first_or_404()
+
     booking.status = 'cancelled'
-    booking.availability.is_booked = False   # mở lại slot
+    booking.availability.is_booked = False   # mở lại slot cho người khác đặt
     db.session.commit()
     flash('Đã từ chối đơn đặt lịch.', 'info')
     return redirect(url_for('tutor.dashboard'))
@@ -67,8 +82,12 @@ def reject(booking_id):
 @login_required
 @tutor_required
 def complete(booking_id):
-    booking = Booking.query.filter_by(id=booking_id, tutor_id=current_user.id,
-                                      status='confirmed').first_or_404()
+    booking = Booking.query.filter_by(
+        id=booking_id,
+        tutor_id=current_user.id,
+        status='confirmed'
+    ).first_or_404()
+
     booking.status = 'completed'
     db.session.commit()
     flash('Buổi dạy đã hoàn thành!', 'success')
@@ -84,7 +103,11 @@ def schedule():
         Availability.tutor_id == current_user.id,
         Availability.avail_date >= date.today()
     ).order_by(Availability.avail_date, Availability.start_time).all()
-    return render_template('tutor/schedule.html', slots=slots)
+
+    return render_template('tutor/schedule.html',
+                           active_tab='schedule',
+                           slots=slots,
+                           today=date.today())
 
 
 # ── Thêm slot rảnh ────────────────────────────────────────
@@ -92,9 +115,9 @@ def schedule():
 @login_required
 @tutor_required
 def add_slot():
-    avail_date = request.form.get('avail_date')
-    start_time = request.form.get('start_time')
-    end_time   = request.form.get('end_time')
+    avail_date = request.form.get('avail_date', '').strip()
+    start_time = request.form.get('start_time', '').strip()
+    end_time   = request.form.get('end_time', '').strip()
 
     if not avail_date or not start_time or not end_time:
         flash('Vui lòng điền đầy đủ thông tin slot.', 'danger')
@@ -106,6 +129,7 @@ def add_slot():
         avail_date=avail_date,
         start_time=start_time
     ).first()
+
     if existing:
         flash('Bạn đã có slot vào thời gian này rồi.', 'warning')
         return redirect(url_for('tutor.schedule'))
@@ -118,7 +142,7 @@ def add_slot():
     )
     db.session.add(slot)
     db.session.commit()
-    flash('Đã thêm slot lịch rảnh.', 'success')
+    flash('Đã thêm slot lịch rảnh thành công.', 'success')
     return redirect(url_for('tutor.schedule'))
 
 
@@ -127,11 +151,16 @@ def add_slot():
 @login_required
 @tutor_required
 def delete_slot(slot_id):
-    slot = Availability.query.filter_by(id=slot_id, tutor_id=current_user.id).first_or_404()
+    slot = Availability.query.filter_by(
+        id=slot_id,
+        tutor_id=current_user.id
+    ).first_or_404()
+
     if slot.is_booked:
         flash('Không thể xóa slot đã có người đặt.', 'danger')
     else:
         db.session.delete(slot)
         db.session.commit()
-        flash('Đã xóa slot.', 'info')
+        flash('Đã xóa slot thành công.', 'info')
+
     return redirect(url_for('tutor.schedule'))

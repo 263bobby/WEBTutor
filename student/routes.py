@@ -3,6 +3,7 @@ from flask_login import login_required, current_user
 from functools import wraps
 from extensions import db
 from models import User, TutorProfile, Availability, Booking, Subject
+from datetime import date
 
 student_bp = Blueprint('student', __name__)
 
@@ -15,6 +16,27 @@ def student_required(f):
             return redirect(url_for('auth.login'))
         return f(*args, **kwargs)
     return decorated
+
+
+# ── Dashboard học viên ────────────────────────────────────
+@student_bp.route('/dashboard')
+@login_required
+@student_required
+def dashboard():
+    pending_count   = Booking.query.filter_by(student_id=current_user.id, status='pending').count()
+    confirmed_count = Booking.query.filter_by(student_id=current_user.id, status='confirmed').count()
+    completed_count = Booking.query.filter_by(student_id=current_user.id, status='completed').count()
+    upcoming = Booking.query.filter(
+        Booking.student_id == current_user.id,
+        Booking.status.in_(['pending', 'confirmed'])
+    ).order_by(Booking.created_at.desc()).limit(5).all()
+
+    return render_template('student/dashboard.html',
+                           active_tab='overview',
+                           pending_count=pending_count,
+                           confirmed_count=confirmed_count,
+                           completed_count=completed_count,
+                           upcoming_bookings=upcoming)
 
 
 # ── Tìm kiếm gia sư ───────────────────────────────────────
@@ -36,19 +58,24 @@ def search():
                            selected_subject=subject_id)
 
 
-# ── Hồ sơ gia sư & lịch rảnh ─────────────────────────────
+# ── Chi tiết gia sư + lịch rảnh ──────────────────────────
 @student_bp.route('/tutor/<int:tutor_id>')
 @login_required
 @student_required
 def tutor_detail(tutor_id):
-    from datetime import date
-    tutor_user = User.query.filter_by(id=tutor_id, role='tutor', is_active=True).first_or_404()
+    tutor_user = User.query.filter_by(
+        id=tutor_id, role='tutor', is_active=True
+    ).first_or_404()
+
     slots = Availability.query.filter(
         Availability.tutor_id == tutor_id,
         Availability.avail_date >= date.today(),
         Availability.is_booked == False
     ).order_by(Availability.avail_date, Availability.start_time).all()
-    return render_template('student/tutor_detail.html', tutor=tutor_user, slots=slots)
+
+    return render_template('student/tutor_detail.html',
+                           tutor=tutor_user,
+                           slots=slots)
 
 
 # ── Đặt lịch ──────────────────────────────────────────────
@@ -58,14 +85,17 @@ def tutor_detail(tutor_id):
 def book(avail_id):
     slot = Availability.query.get_or_404(avail_id)
 
+    # Kiểm tra slot còn trống không
     if slot.is_booked:
         flash('Slot này đã được đặt rồi, vui lòng chọn slot khác.', 'danger')
         return redirect(url_for('student.tutor_detail', tutor_id=slot.tutor_id))
 
     # Kiểm tra học viên chưa đặt slot này
     existing = Booking.query.filter_by(
-        student_id=current_user.id, avail_id=avail_id
+        student_id=current_user.id,
+        avail_id=avail_id
     ).filter(Booking.status.in_(['pending', 'confirmed'])).first()
+
     if existing:
         flash('Bạn đã đặt slot này rồi.', 'warning')
         return redirect(url_for('student.tutor_detail', tutor_id=slot.tutor_id))
@@ -77,7 +107,7 @@ def book(avail_id):
         student_id=current_user.id,
         tutor_id=slot.tutor_id,
         avail_id=avail_id,
-        note=note,
+        note=note if note else None,
         status='pending'
     )
     slot.is_booked = True
@@ -93,8 +123,10 @@ def book(avail_id):
 @login_required
 @student_required
 def my_bookings():
-    bookings = Booking.query.filter_by(student_id=current_user.id)\
-                            .order_by(Booking.created_at.desc()).all()
+    bookings = Booking.query.filter_by(
+        student_id=current_user.id
+    ).order_by(Booking.created_at.desc()).all()
+
     return render_template('student/my_bookings.html', bookings=bookings)
 
 
@@ -103,9 +135,12 @@ def my_bookings():
 @login_required
 @student_required
 def cancel(booking_id):
-    booking = Booking.query.filter_by(id=booking_id, student_id=current_user.id).first_or_404()
+    booking = Booking.query.filter_by(
+        id=booking_id,
+        student_id=current_user.id
+    ).first_or_404()
 
-    if booking.status not in ('pending',):
+    if booking.status != 'pending':
         flash('Chỉ có thể hủy đơn đang chờ xác nhận.', 'danger')
         return redirect(url_for('student.my_bookings'))
 
@@ -114,21 +149,3 @@ def cancel(booking_id):
     db.session.commit()
     flash('Đã hủy lịch thành công.', 'info')
     return redirect(url_for('student.my_bookings'))
-
-@student_bp.route('/dashboard')
-@login_required
-@student_required
-def dashboard():
-    pending_count   = Booking.query.filter_by(student_id=current_user.id, status='pending').count()
-    confirmed_count = Booking.query.filter_by(student_id=current_user.id, status='confirmed').count()
-    completed_count = Booking.query.filter_by(student_id=current_user.id, status='completed').count()
-    upcoming = Booking.query.filter(
-        Booking.student_id == current_user.id,
-        Booking.status.in_(['pending', 'confirmed'])
-    ).order_by(Booking.created_at.desc()).limit(5).all()
-    return render_template('student/dashboard.html',
-                           active_tab='overview',
-                           pending_count=pending_count,
-                           confirmed_count=confirmed_count,
-                           completed_count=completed_count,
-                           upcoming_bookings=upcoming)

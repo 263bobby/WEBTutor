@@ -1,61 +1,92 @@
 {% extends "base.html" %}
-{% block title %}Lịch học của tôi{% endblock %}
+{% block title %}Lịch học của tôi — TutorVN{% endblock %}
+{% block navbar %}{% endblock %}
+{% block footer %}{% endblock %}
 
 {% block content %}
-<h5 class="fw-bold mb-4"><i class="bi bi-calendar-check me-2 text-primary"></i>Lịch học của tôi</h5>
+<div class="dashboard-layout">
+  <aside class="sidebar">
+    <div class="sidebar-logo">Tutor<span>VN</span></div>
+    <div class="sidebar-user">
+      <div class="sidebar-av">{{ current_user.full_name[0] }}</div>
+      <div>
+        <div class="sidebar-user-name">{{ current_user.full_name }}</div>
+        <div class="sidebar-user-role">Học viên</div>
+      </div>
+    </div>
+    <ul class="sidebar-nav">
+      <li><a href="{{ url_for('student.dashboard') }}"><span class="icon">🏠</span> Tổng quan</a></li>
+      <li class="active"><a href="{{ url_for('student.my_bookings') }}"><span class="icon">📅</span> Lịch học của tôi</a></li>
+      <li><a href="{{ url_for('student.search') }}"><span class="icon">🔍</span> Tìm gia sư</a></li>
+      <div class="sidebar-section">Tài khoản</div>
+      <li><a href="{{ url_for('auth.logout') }}"><span class="icon">🚪</span> Đăng xuất</a></li>
+    </ul>
+  </aside>
 
-{% if bookings %}
-<div class="table-responsive">
-  <table class="table table-hover align-middle bg-white rounded">
-    <thead class="table-light">
-      <tr>
-        <th>Gia sư</th>
-        <th>Ngày học</th>
-        <th>Giờ</th>
-        <th>Ghi chú</th>
-        <th>Trạng thái</th>
-        <th>Ngày đặt</th>
-        <th></th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for b in bookings %}
-      <tr>
-        <td class="fw-bold">{{ b.tutor_user.full_name }}</td>
-        <td>{{ b.availability.avail_date.strftime('%d/%m/%Y') }}</td>
-        <td>{{ b.availability.start_time }} – {{ b.availability.end_time }}</td>
-        <td class="text-muted small">{{ b.note or '—' }}</td>
-        <td>
-          <span class="badge badge-{{ b.status }} px-2 py-1">
-            {% if b.status == 'pending' %}Chờ xác nhận
-            {% elif b.status == 'confirmed' %}Đã xác nhận
-            {% elif b.status == 'completed' %}Hoàn thành
-            {% else %}Đã hủy{% endif %}
-          </span>
-        </td>
-        <td class="text-muted small">{{ b.created_at.strftime('%d/%m %H:%M') }}</td>
-        <td>
-          {% if b.status == 'pending' %}
-          <form method="POST" action="{{ url_for('student.cancel', booking_id=b.id) }}"
-                onsubmit="return confirm('Bạn chắc chắn muốn hủy lịch này?')">
-            <button type="submit" class="btn btn-outline-danger btn-sm">
-              <i class="bi bi-x-circle me-1"></i>Hủy
-            </button>
-          </form>
-          {% endif %}
-        </td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
+  <div class="dashboard-main">
+    <div class="dashboard-header">
+      <h1>📅 Lịch học của tôi</h1>
+      <p>Theo dõi tất cả đơn đặt lịch</p>
+    </div>
+
+    {% if bookings %}
+    <div class="panel">
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>Gia sư</th>
+            <th>Ngày học</th>
+            <th>Giờ học</th>
+            <th>Ghi chú</th>
+            <th>Trạng thái</th>
+            <th>Ngày đặt</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for b in bookings %}
+          <tr>
+            <td><strong>{{ b.tutor_user.full_name }}</strong></td>
+            <td>{{ b.availability.avail_date.strftime('%d/%m/%Y') }}</td>
+            <td>{{ b.availability.start_time }} – {{ b.availability.end_time }}</td>
+            <td style="color:var(--muted);font-size:.85rem">{{ b.note or '—' }}</td>
+            <td>
+              <span class="status-badge {{ b.status }}">
+                {% if b.status == 'pending' %}⏳ Chờ xác nhận
+                {% elif b.status == 'confirmed' %}✅ Đã xác nhận
+                {% elif b.status == 'completed' %}🎓 Hoàn thành
+                {% else %}❌ Đã hủy{% endif %}
+              </span>
+            </td>
+            <td style="color:var(--muted);font-size:.8rem">
+              {{ b.created_at.strftime('%d/%m %H:%M') }}
+            </td>
+            <td>
+              {% if b.status == 'pending' %}
+              <form method="POST"
+                    action="{{ url_for('student.cancel', booking_id=b.id) }}"
+                    onsubmit="return confirm('Bạn chắc chắn muốn hủy lịch này?')">
+                <button type="submit" class="action-btn reject">Hủy</button>
+              </form>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    {% else %}
+    <div class="panel" style="text-align:center;padding:3rem">
+      <div style="font-size:3rem;margin-bottom:1rem">📭</div>
+      <p style="color:var(--muted);margin-bottom:1.5rem">Bạn chưa có lịch học nào.</p>
+      <a href="{{ url_for('student.search') }}" class="btn-primary"
+         style="display:inline-block;text-decoration:none;padding:.85rem 2rem">
+        🔍 Tìm gia sư ngay
+      </a>
+    </div>
+    {% endif %}
+
+  </div>
 </div>
-{% else %}
-<div class="text-center text-muted py-5">
-  <i class="bi bi-calendar2-x" style="font-size:3rem"></i>
-  <p class="mt-2">Bạn chưa có lịch học nào.</p>
-  <a href="{{ url_for('student.search') }}" class="btn btn-primary mt-1">
-    <i class="bi bi-search me-1"></i>Tìm gia sư ngay
-  </a>
-</div>
-{% endif %}
 {% endblock %}
